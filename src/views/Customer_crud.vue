@@ -1,15 +1,21 @@
 <template>
-  <div class="container mt-5 animate-fade-in">
+  <div class="container mt-4 animate-fade-in">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
       <div>
-        <h2 class="fw-bold text-dark mb-1">💎 Manage Customers</h2>
+        <h4 class="fw-bold text-dark mb-1">Manage Customers</h4>
+        <p class="text-muted mb-0" style="font-size: 0.85rem;">จัดการและตรวจสอบข้อมูลลูกค้าในระบบ</p>
       </div>
-      <div class="d-flex gap-2">
+      <div class="d-flex gap-2 flex-wrap flex-md-nowrap">
         <div class="search-container shadow-sm">
           <i class="bi bi-search text-muted ms-3"></i>
-          <input v-model="searchQuery" type="text" class="search-input" placeholder="Search name, user or phone..." />
+          <input 
+            v-model="searchQuery" 
+            type="text" 
+            class="search-input" 
+            placeholder="ค้นหาด้วย ID, ชื่อ, เบอร์โทร..." 
+          />
         </div>
-        <button class="btn btn-primary px-4 rounded-pill shadow-sm fw-bold" @click="openAddModal">
+        <button class="btn btn-primary px-4 rounded-pill shadow-sm fw-bold d-flex align-items-center" @click="openAddModal">
           <i class="bi bi-person-plus-fill me-2"></i> Add Customer
         </button>
       </div>
@@ -19,62 +25,81 @@
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
           <thead class="bg-light">
-            <tr>
-              <th class="ps-4">ID</th>
-              <th>Full Name</th>
-              <th>Username</th>
-              <th>Contact</th>
-              <th class="text-center">Actions</th>
+            <tr style="font-size: 0.85rem;">
+              <th class="ps-4" style="width: 10%;">ID</th>
+              <th style="width: 30%;">Full Name</th>
+              <th style="width: 25%;">Username</th>
+              <th style="width: 25%;">Contact</th>
+              <th class="text-center" style="width: 10%;">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="cus in filteredCustomers" :key="cus.cust_id">
-              <td class="ps-4 fw-bold text-primary">#{{ cus.cust_id }}</td>
-              <td><div class="fw-semibold">{{ cus.cfull_name }}</div></td>
-              <td><code class="text-dark">{{ cus.c_username }}</code></td>
+              <td class="ps-4 fw-bold text-primary font-monospace small">#{{ cus.cust_id }}</td>
               <td>
-                <div class="small"><i class="bi bi-telephone me-1"></i> {{ cus.phone }}</div>
-                <div class="small text-muted"><i class="bi bi-envelope me-1"></i> {{ cus.email }}</div>
+                <div class="fw-semibold text-dark" style="font-size: 0.95rem;">{{ cus.cfull_name }}</div>
+              </td>
+              <td>
+                <code class="text-secondary bg-light px-2 py-1 rounded" style="font-size: 0.85rem;">{{ cus.c_username }}</code>
+              </td>
+              <td>
+                <div class="small mb-1" style="font-size: 0.85rem;">
+                  <i class="bi bi-telephone text-muted me-1"></i> {{ cus.phone }}
+                </div>
+                <div class="small text-muted" style="font-size: 0.85rem;">
+                  <i class="bi bi-envelope me-1"></i> {{ cus.email }}
+                </div>
               </td>
               <td class="text-center">
-                <div class="btn-group shadow-sm rounded-3">
-                  <button class="btn btn-outline-warning btn-sm px-3" @click="openEditModal(cus)">
+                <div class="d-flex justify-content-center gap-2">
+                  <button class="btn btn-light btn-sm px-3 rounded-pill text-primary fw-medium border shadow-sm btn-action" @click="openEditModal(cus)">
                     <i class="bi bi-pencil-square"></i>
                   </button>
-                  <button class="btn btn-outline-danger btn-sm px-3" @click="deleteCustomer(cus.cust_id)">
+                  <button class="btn btn-light btn-sm px-3 rounded-pill text-danger fw-medium border shadow-sm btn-action" @click="deleteCustomer(cus.cust_id)">
                     <i class="bi bi-trash"></i>
                   </button>
                 </div>
               </td>
             </tr>
             <tr v-if="filteredCustomers.length === 0 && !loading">
-              <td colspan="5" class="text-center py-5 text-muted">ไม่พบข้อมูลลูกค้า</td>
+              <td colspan="5" class="text-center py-5 text-muted">
+                <i class="bi bi-search fs-3 d-block mb-2 opacity-50"></i>
+                ไม่พบข้อมูลลูกค้าที่คุณค้นหา
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
+    <div v-if="loading" class="text-center my-5">
+      <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
     <div class="modal fade" id="customerModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
-          <div class="modal-header border-0 pb-0">
-            <h5 class="fw-bold">{{ isEditMode ? "📝 Edit Customer" : "🆕 New Customer" }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <div class="modal-header border-0 pb-0 mt-2 mx-2">
+            <h5 class="fw-bold mb-0 text-dark d-flex align-items-center">
+              <i v-if="isEditMode" class="bi bi-pencil-square text-warning me-2 fs-4"></i>
+              <i v-else class="bi bi-person-plus-fill text-primary me-2 fs-4"></i>
+              {{ isEditMode ? "Edit Customer" : "New Customer" }}
+            </h5>
+            <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
           </div>
-          <div class="modal-body py-4">
+          <div class="modal-body p-4">
             <form @submit.prevent="saveCustomer">
               <div class="mb-3">
-                <label class="form-label fw-bold small text-uppercase">ชื่อ-นามสกุล</label>
+                <label class="form-label fw-bold small text-uppercase text-muted">ชื่อ-นามสกุล</label>
                 <input v-model="editCustomer.cfull_name" type="text" class="form-control rounded-3" required />
               </div>
               <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                  <label class="form-label fw-bold small text-uppercase">Username</label>
+                  <label class="form-label fw-bold small text-uppercase text-muted">Username</label>
                   <input v-model="editCustomer.c_username" type="text" class="form-control rounded-3" required />
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label fw-bold small text-uppercase">
+                  <label class="form-label fw-bold small text-uppercase text-muted">
                     Password <span v-if="isEditMode" class="text-lowercase fw-normal">(เว้นว่างถ้าไม่เปลี่ยน)</span>
                   </label>
                   <input v-model="editCustomer.c_password" type="password" class="form-control rounded-3" :required="!isEditMode" />
@@ -82,16 +107,18 @@
               </div>
               <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                  <label class="form-label fw-bold small text-uppercase">เบอร์โทรศัพท์</label>
+                  <label class="form-label fw-bold small text-uppercase text-muted">เบอร์โทรศัพท์</label>
                   <input v-model="editCustomer.phone" type="text" class="form-control rounded-3" required />
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label fw-bold small text-uppercase">อีเมล</label>
+                  <label class="form-label fw-bold small text-uppercase text-muted">อีเมล</label>
                   <input v-model="editCustomer.email" type="email" class="form-control rounded-3" required />
                 </div>
               </div>
               <div class="d-grid mt-4">
-                <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold">บันทึกข้อมูล</button>
+                <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm">
+                  <i class="bi bi-save me-2"></i> บันทึกข้อมูล
+                </button>
               </div>
             </form>
           </div>
@@ -116,6 +143,7 @@ export default {
     const API_URL = "http://localhost/projectgroup/php_api/customer_crud.php";
 
     const fetchCustomers = async () => {
+      loading.value = true;
       try {
         const res = await fetch(API_URL);
         const result = await res.json();
@@ -124,13 +152,21 @@ export default {
       finally { loading.value = false; }
     };
 
+    // ✅ ปรับระบบค้นหาให้ครอบคลุม ID, Name, Username, Phone, Email
     const filteredCustomers = computed(() => {
-      if (!customers.value) return [];
-      return customers.value.filter(c => 
-        (c.cfull_name || "").toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        (c.c_username || "").toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        (c.phone || "").includes(searchQuery.value)
-      );
+      if (!searchQuery.value) return customers.value;
+      
+      const search = searchQuery.value.toLowerCase().trim();
+
+      return customers.value.filter(c => {
+        const idMatch = c.cust_id ? String(c.cust_id).includes(search) : false;
+        const nameMatch = c.cfull_name ? c.cfull_name.toLowerCase().includes(search) : false;
+        const userMatch = c.c_username ? c.c_username.toLowerCase().includes(search) : false;
+        const phoneMatch = c.phone ? String(c.phone).includes(search) : false;
+        const emailMatch = c.email ? c.email.toLowerCase().includes(search) : false;
+
+        return idMatch || nameMatch || userMatch || phoneMatch || emailMatch;
+      });
     });
 
     onMounted(() => {
@@ -152,37 +188,80 @@ export default {
 
     const saveCustomer = async () => {
       const method = isEditMode.value ? "PUT" : "POST";
-      const res = await fetch(API_URL, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editCustomer.value)
-      });
-      const result = await res.json();
-      if (result.success) {
-        fetchCustomers();
-        modalInstance.hide();
-      } else { alert(result.message); }
+      try {
+        const res = await fetch(API_URL, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(editCustomer.value)
+        });
+        const result = await res.json();
+        if (result.success) {
+          fetchCustomers();
+          modalInstance.hide();
+        } else { alert(result.message); }
+      } catch (err) { alert("Error saving data"); }
     };
 
     const deleteCustomer = async (id) => {
-      if (!confirm("ลบข้อมูลลูกค้านี้ใช่หรือไม่?")) return;
-      await fetch(API_URL, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cust_id: id })
-      });
-      fetchCustomers();
+      if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลลูกค้านี้?")) return;
+      try {
+        await fetch(API_URL, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cust_id: id })
+        });
+        fetchCustomers();
+      } catch (err) { alert("Error deleting data"); }
     };
 
-    return { customers, loading, searchQuery, filteredCustomers, editCustomer, isEditMode, openAddModal, openEditModal, saveCustomer, deleteCustomer };
+    return { 
+      customers, loading, searchQuery, filteredCustomers, 
+      editCustomer, isEditMode, openAddModal, openEditModal, 
+      saveCustomer, deleteCustomer 
+    };
   }
 };
 </script>
 
 <style scoped>
-.search-container { display: flex; align-items: center; background: white; border: 1px solid #e2e8f0; border-radius: 50px; min-width: 250px; height: 42px; }
-.search-input { border: none; outline: none; width: 100%; padding: 0 15px; font-size: 0.95rem; background: transparent; }
+/* Typography */
+h4 { letter-spacing: -0.5px; }
+
+/* ช่องค้นหา */
+.search-container { 
+  display: flex; align-items: center; background: white; 
+  border: 1px solid #e2e8f0; border-radius: 50px; 
+  min-width: 250px; height: 40px; 
+  transition: all 0.3s ease;
+}
+.search-container:focus-within {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1) !important;
+}
+.search-input { 
+  border: none; outline: none; width: 100%; padding: 0 15px; 
+  font-size: 0.85rem; color: #334155; background: transparent; 
+}
+
+/* ปุ่ม Action ในตาราง */
+.btn-action {
+  transition: all 0.2s ease;
+  background-color: #ffffff;
+}
+.btn-action:hover {
+  transform: translateY(-2px);
+  background-color: #f8fafc;
+}
+
+/* Modal Inputs */
+.form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+}
+
+/* ตาราง */
+.table thead th { font-weight: 700; text-transform: uppercase; color: #64748b; padding: 1rem; border-bottom: 2px solid #e2e8f0; }
+
 .animate-fade-in { animation: fadeIn 0.4s ease-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.table thead th { font-size: 0.75rem; text-transform: uppercase; color: #64748b; padding: 1rem; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 </style>

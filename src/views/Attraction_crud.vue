@@ -1,18 +1,24 @@
 <template>
-  <div class="container mt-5 animate-fade-in">
+  <div class="container mt-4 animate-fade-in">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
       <div>
-        <h2 class="fw-bold text-dark mb-1">🛠️ Manage Touring</h2>
+        <h4 class="fw-bold text-dark mb-1">Manage Touring</h4>
+        <p class="text-muted mb-0" style="font-size: 0.85rem;">จัดการและตรวจสอบรายการทัวร์ทั้งหมด</p>
       </div>
       
       <div class="d-flex gap-2">
         <div class="search-container shadow-sm">
           <i class="bi bi-search text-muted ms-3"></i>
-          <input v-model="searchQuery" type="text" class="search-input" placeholder="Search touring..." />
+          <input 
+            v-model="searchQuery" 
+            type="text" 
+            class="search-input" 
+            placeholder="ค้นหาด้วยรหัส (ID), ชื่อทัวร์..." 
+          />
         </div>
         
-        <button class="btn btn-primary px-4 rounded-pill shadow-sm fw-bold" @click="openAddModal">
-          <i class="bi bi-plus-circle me-2"></i> Add Tour
+        <button class="btn btn-primary px-4 rounded-pill shadow-sm fw-bold d-flex align-items-center" @click="openAddModal">
+          <i class="bi bi-plus-lg me-2"></i> Add Tour
         </button>
       </div>
     </div>
@@ -21,65 +27,81 @@
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
           <thead class="bg-light">
-            <tr>
-              <th class="ps-4">No.</th>
-              <th>Image</th>
+            <tr style="font-size: 0.85rem;">
+              <th class="ps-4">ID</th> <th>Image</th>
               <th>Destination</th>
               <th>Category</th>
               <th>Price</th>
-              <th class="text-center">Seats</th> <th class="text-center">Actions</th>
+              <th class="text-center">Seats</th>
+              <th class="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(tour, index) in filteredProducts" :key="tour.att_id">
-              <td class="ps-4 text-muted">{{ index + 1 }}</td>
+            <tr v-for="tour in filteredProducts" :key="tour.att_id">
+              <td class="ps-4 text-muted small font-monospace">{{ tour.att_id }}</td>
               <td>
                 <img v-if="tour.image" :src="'http://localhost/projectgroup/php_api/uploads/' + tour.image" class="rounded-3 border" width="60" height="45" style="object-fit: cover;" />
                 <div v-else class="no-img">No Img</div>
               </td>
               <td>
-                <div class="fw-bold text-dark">{{ tour.att_name }}</div>
-                <div class="text-muted small text-truncate" style="max-width: 150px;">{{ tour.description }}</div>
+                <div class="fw-bold text-dark" style="font-size: 0.95rem;">{{ tour.att_name }}</div>
+                <div class="text-muted text-truncate mt-1" style="max-width: 150px; font-size: 0.8rem;">{{ tour.description }}</div>
               </td>
               <td>
-                <span class="badge bg-info-subtle text-info rounded-pill px-3">{{ tour.category_name }}</span>
+                <span class="badge bg-secondary-subtle text-secondary rounded-pill fw-medium px-3 py-2" style="font-size: 0.75rem;">
+                  {{ tour.category_name }}
+                </span>
               </td>
-              <td class="fw-bold text-success">{{ parseFloat(tour.price).toLocaleString() }} ฿</td>
-              <td class="text-center">{{ tour.seat }}</td> <td class="text-center">
-                <div class="btn-group shadow-sm rounded-3">
-                  <button class="btn btn-outline-warning btn-sm px-3" @click="openEditModal(tour)">
-                    <i class="bi bi-pencil"></i>
+              <td class="fw-bold text-success" style="font-size: 0.95rem;">{{ parseFloat(tour.price).toLocaleString() }} ฿</td>
+              <td class="text-center">
+                <span class="badge bg-light text-dark border px-2 py-1">{{ tour.seat }}</span>
+              </td>
+              <td class="text-center">
+                <div class="d-flex justify-content-center gap-2">
+                  <button class="btn btn-light btn-sm px-3 rounded-pill text-primary fw-medium border shadow-sm btn-action" @click="openEditModal(tour)">
+                    <i class="bi bi-pencil-square me-1"></i> Edit
                   </button>
-                  <button class="btn btn-outline-danger btn-sm px-3" @click="deleteProduct(tour.att_id)">
-                    <i class="bi bi-trash"></i>
+                  <button class="btn btn-light btn-sm px-3 rounded-pill text-danger fw-medium border shadow-sm btn-action" @click="deleteProduct(tour.att_id)">
+                    <i class="bi bi-trash me-1"></i> Delete
                   </button>
                 </div>
               </td>
             </tr>
             <tr v-if="filteredProducts.length === 0 && !loading">
-              <td colspan="7" class="text-center py-5 text-muted">ไม่พบข้อมูลที่ต้องการ</td>
+              <td colspan="7" class="text-center py-5 text-muted">
+                <i class="bi bi-search fs-3 d-block mb-2 opacity-50"></i>
+                ไม่พบข้อมูลที่คุณค้นหา
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
+    <div v-if="loading" class="text-center my-5">
+      <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
     <div class="modal fade" id="tourModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4">
-          <div class="modal-header border-0 pb-0">
-            <h5 class="fw-bold">{{ isEditMode ? "📝 Edit Tour" : "🆕 New Tour" }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <div class="modal-header border-0 pb-0 mt-2 mx-2">
+            <h5 class="fw-bold mb-0 text-dark d-flex align-items-center">
+              <i v-if="isEditMode" class="bi bi-pencil-square text-warning me-2 fs-4"></i>
+              <i v-else class="bi bi-plus-circle-fill text-primary me-2 fs-4"></i>
+              {{ isEditMode ? "Edit Tour" : "New Tour" }}
+            </h5>
+            <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
           </div>
-          <div class="modal-body py-4">
+          <div class="modal-body p-4">
             <form @submit.prevent="saveProduct">
               <div class="row g-3">
                 <div class="col-md-8">
-                  <label class="form-label fw-bold small">ชื่อสถานที่ท่องเที่ยว</label>
+                  <label class="form-label fw-bold small text-muted">ชื่อสถานที่ท่องเที่ยว</label>
                   <input v-model="editForm.att_name" type="text" class="form-control rounded-3" required />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label fw-bold small">ประเภททัวร์</label>
+                  <label class="form-label fw-bold small text-muted">ประเภททัวร์</label>
                   <select v-model="editForm.category_id" class="form-select rounded-3" required>
                     <option value="" disabled>-- เลือกหมวดหมู่ --</option>
                     <option v-for="cat in categories" :key="cat.category_id" :value="cat.category_id">
@@ -88,26 +110,28 @@
                   </select>
                 </div>
                 <div class="col-12">
-                  <label class="form-label fw-bold small">รายละเอียด</label>
+                  <label class="form-label fw-bold small text-muted">รายละเอียด</label>
                   <textarea v-model="editForm.description" class="form-control rounded-3" rows="3"></textarea>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label fw-bold small">ราคา (THB)</label>
+                  <label class="form-label fw-bold small text-muted">ราคา (THB)</label>
                   <input v-model="editForm.price" type="number" class="form-control rounded-3" required />
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label fw-bold small">จำนวนที่นั่ง</label> <input v-model="editForm.seat" type="number" class="form-control rounded-3" required /> </div>
+                  <label class="form-label fw-bold small text-muted">จำนวนที่นั่ง</label> 
+                  <input v-model="editForm.seat" type="number" class="form-control rounded-3" required /> 
+                </div>
                 <div class="col-12">
-                  <label class="form-label fw-bold small">รูปภาพ</label>
+                  <label class="form-label fw-bold small text-muted">รูปภาพ</label>
                   <input type="file" @change="handleFileUpload" class="form-control rounded-3" :required="!isEditMode" />
                   <div v-if="isEditMode && editForm.image" class="mt-2">
-                    <img :src="'http://localhost/projectgroup/php_api/uploads/' + editForm.image" class="rounded border" width="80" />
+                    <img :src="'http://localhost/projectgroup/php_api/uploads/' + editForm.image" class="rounded border shadow-sm" width="80" />
                   </div>
                 </div>
               </div>
               <div class="d-grid mt-4">
                 <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm">
-                  บันทึกข้อมูล
+                  <i class="bi bi-save me-2"></i> บันทึกข้อมูล
                 </button>
               </div>
             </form>
@@ -129,7 +153,6 @@ export default {
     const searchQuery = ref("");
     const isEditMode = ref(false);
 
-    // ✅ เปลี่ยนชื่อตัวแปรจาก stock เป็น seat ให้ตรงตามที่คุณต้องการ
     const editForm = ref({ 
       att_id: null, 
       att_name: "", 
@@ -160,11 +183,19 @@ export default {
       loading.value = false;
     };
 
+    // ✅ ปรับปรุงการกรองข้อมูล ให้ค้นหา ID ได้ ป้องกันค่า Null
     const filteredProducts = computed(() => {
-      return products.value.filter(p => 
-        (p.att_name || "").toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        (p.category_name || "").toLowerCase().includes(searchQuery.value.toLowerCase())
-      );
+      if (!searchQuery.value) return products.value;
+
+      const query = searchQuery.value.toLowerCase().trim();
+
+      return products.value.filter(p => {
+        const idMatch = p.att_id ? String(p.att_id).includes(query) : false;
+        const nameMatch = p.att_name ? p.att_name.toLowerCase().includes(query) : false;
+        const catMatch = p.category_name ? p.category_name.toLowerCase().includes(query) : false;
+        
+        return idMatch || nameMatch || catMatch;
+      });
     });
 
     onMounted(() => {
@@ -174,7 +205,6 @@ export default {
 
     const openAddModal = () => {
       isEditMode.value = false;
-      // ✅ ล้างค่าฟอร์มโดยใช้ชื่อตัวแปรใหม่ (seat)
       editForm.value = { att_id: null, att_name: "", category_id: "", description: "", price: "", seat: "", image: "" };
       newImageFile.value = null;
       modalInstance.show();
@@ -182,7 +212,6 @@ export default {
 
     const openEditModal = (tour) => {
       isEditMode.value = true;
-      // ✅ ก๊อปปี้ค่ารวมถึงตัวแปร seat มาใส่ในฟอร์ม
       editForm.value = { ...tour };
       newImageFile.value = null;
       modalInstance.show();
@@ -199,7 +228,7 @@ export default {
       formData.append("category_id", editForm.value.category_id);
       formData.append("description", editForm.value.description);
       formData.append("price", editForm.value.price);
-      formData.append("seat", editForm.value.seat); // ✅ เปลี่ยนการส่งข้อมูลจาก stock เป็น seat
+      formData.append("seat", editForm.value.seat); 
       
       if (newImageFile.value) formData.append("image", newImageFile.value);
 
@@ -207,15 +236,16 @@ export default {
         const res = await fetch(API_URL, { method: "POST", body: formData });
         const result = await res.json();
         if (result.success) {
-          alert(result.message);
           fetchData();
           modalInstance.hide();
+        } else {
+           alert(result.message);
         }
       } catch (err) { alert("Error connecting to server"); }
     };
 
     const deleteProduct = async (id) => {
-      if (!confirm("ลบสถานที่นี้?")) return;
+      if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบสถานที่นี้?")) return;
       const formData = new FormData();
       formData.append("action", "delete");
       formData.append("att_id", id);
@@ -225,17 +255,59 @@ export default {
       } catch (err) { alert("Error deleting product"); }
     };
 
-    return { products, categories, loading, searchQuery, filteredProducts, editForm, isEditMode, openAddModal, openEditModal, handleFileUpload, saveProduct, deleteProduct };
+    return { 
+      products, categories, loading, searchQuery, 
+      filteredProducts, editForm, isEditMode, 
+      openAddModal, openEditModal, handleFileUpload, 
+      saveProduct, deleteProduct 
+    };
   }
 };
 </script>
 
 <style scoped>
-/* CSS คงเดิมทั้งหมดตาม UI ที่คุณต้องการ */
-.search-container { display: flex; align-items: center; background: white; border: 1px solid #e2e8f0; border-radius: 50px; min-width: 250px; height: 42px; }
-.search-input { border: none; outline: none; width: 100%; padding: 0 15px; font-size: 0.95rem; background: transparent; }
-.no-img { width: 60px; height: 45px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; color: #94a3b8; border-radius: 4px; }
+/* Typography */
+h4 { letter-spacing: -0.5px; }
+
+/* ช่องค้นหา */
+.search-container {
+  display: flex; align-items: center; background: white; 
+  border: 1px solid #e2e8f0; border-radius: 50px; 
+  min-width: 280px; height: 40px;
+  transition: all 0.3s ease;
+}
+.search-container:focus-within {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1) !important;
+}
+.search-input { 
+  border: none; outline: none; background: transparent; 
+  width: 100%; padding: 0 15px; font-size: 0.85rem; color: #334155;
+}
+
+/* ปุ่มและรูปในตาราง */
+.no-img { 
+  width: 60px; height: 45px; background: #f8fafc; 
+  display: flex; align-items: center; justify-content: center; 
+  font-size: 0.6rem; color: #94a3b8; border-radius: 6px; border: 1px dashed #cbd5e1;
+}
+.btn-action {
+  transition: all 0.2s ease;
+  background-color: #ffffff;
+}
+.btn-action:hover {
+  transform: translateY(-2px);
+  background-color: #f8fafc;
+}
+
+/* Modal Input Focus */
+.form-control:focus, .form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+}
+
+.table thead th { font-weight: 700; text-transform: uppercase; color: #64748b; padding: 1rem; border-bottom: 2px solid #e2e8f0; }
+
 .animate-fade-in { animation: fadeIn 0.4s ease-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.table thead th { font-size: 0.75rem; text-transform: uppercase; color: #64748b; padding: 1rem; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 </style>

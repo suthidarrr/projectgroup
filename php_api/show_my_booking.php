@@ -1,31 +1,51 @@
 <?php
+/* ✅ ตั้งค่า Header เพื่อรองรับการเรียกใช้งานจาก Vue (CORS) */
 header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: *");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Content-Type: application/json; charset=UTF-8");
+
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') { exit; }
 
 include 'condb.php';
 
 try {
-    if (!isset($_GET['cust_id'])) {
-        echo json_encode(["success" => false, "message" => "ไม่พบรหัสลูกค้า"]);
+    /* ✅ 1. ตรวจสอบว่ามีการส่ง cust_id มาทาง Query String หรือไม่ */
+    if (!isset($_GET['cust_id']) || empty($_GET['cust_id'])) {
+        echo json_encode([
+            "success" => false,
+            "message" => "กรุณาระบุรหัสลูกค้า (Customer ID)"
+        ]);
         exit;
     }
 
     $cust_id = $_GET['cust_id'];
 
-    // SQL ดึงข้อมูลการจอง JOIN กับตารางสถานที่ท่องเที่ยว
-    $sql = "SELECT b.*, a.att_name, a.image, a.price as unit_price
+    /* ✅ 2. Query ข้อมูลจากตาราง bookings  
+       โดย JOIN กับตาราง attraction เพื่อเอาชื่อ (att_name) และรูปภาพ (image) */
+    $sql = "SELECT b.booking_id, b.booking_date, b.travel_date, b.num_people, b.total_price, 
+                   a.att_name, a.image 
             FROM bookings b
             JOIN attraction a ON b.att_id = a.att_id
             WHERE b.cust_id = :cust_id
-            ORDER BY b.booking_date DESC";
-            
+            ORDER BY b.booking_date DESC"; // เรียงจากรายการล่าสุดขึ้นก่อน
+
     $stmt = $conn->prepare($sql);
     $stmt->execute([':cust_id' => $cust_id]);
-    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    echo json_encode(["success" => true, "data" => $data]);
+    /* ✅ 3. ส่งข้อมูลกลับไปยัง Vue */
+    echo json_encode([
+        "success" => true,
+        "data" => $bookings
+    ]);
 
 } catch (PDOException $e) {
-    echo json_encode(["success" => false, "message" => $e->getMessage()]);
+    echo json_encode([
+        "success" => false,
+        "message" => "เกิดข้อผิดพลาดทางฐานข้อมูล",
+        "error" => $e->getMessage()
+    ]);
 }
 ?>

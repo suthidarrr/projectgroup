@@ -33,6 +33,7 @@ const routes = [
     name: 'add_employee',
     component: () => import('../views/Add_employee.vue')
   },
+  
 
   // 🌍 หน้าแสดงข้อมูลทั่วไป (Public - ใครก็เข้าได้)
   {
@@ -58,8 +59,8 @@ const routes = [
 
   // 🛠️ ส่วนจัดการข้อมูล (Private - ต้อง Login และเป็นพนักงาน)
   {
-    path: '/product_crud',
-    name: 'product_crud',
+    path: '/attraction_crud',
+    name: 'attraction_crud',
     component: () => import('../views/Attraction_crud.vue'),
     meta: { requiresAuth: true }
   },
@@ -86,6 +87,13 @@ const routes = [
     path: '/mybooking',
     name: 'mybooking',
     component: () => import('../views/Mybooking.vue'),
+    meta: { requiresAuth: true }
+  }
+  ,
+  {
+    path: '/booking_crud',
+    name: 'booking_crud',
+    component: () => import('../views/Booking_crud.vue'),
     meta: { requiresAuth: true }
   }
 ]

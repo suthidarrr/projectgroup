@@ -30,17 +30,23 @@
                 <div class="d-flex justify-content-between align-items-start mb-3">
                   <div>
                     <h5 class="fw-bold text-dark mb-1">{{ item.att_name }}</h5>
-                    <span class="text-muted small">จองเมื่อ: {{ formatDate(item.booking_date) }}</span>
+                    <span class="text-muted small">ทำรายการเมื่อ: {{ formatDate(item.booking_date) }}</span>
                   </div>
                   <span class="badge rounded-pill px-3 py-2 bg-success text-white">ชำระเงินแล้ว</span>
                 </div>
 
                 <div class="row g-3 py-3 border-top border-bottom bg-light">
-                  <div class="col-6 col-md-3 border-end">
+                  <div class="col-6 col-md-2 border-end">
                     <div class="small text-muted mb-1 fw-bold">Booking ID</div>
                     <div class="fw-bold">#BK-{{ item.booking_id }}</div>
                   </div>
+                  
                   <div class="col-6 col-md-3 border-end">
+                    <div class="small text-muted mb-1 fw-bold text-primary"><i class="bi bi-calendar-check me-1"></i>วันเดินทาง</div>
+                    <div class="fw-bold text-primary">{{ formatDate(item.travel_date) }}</div>
+                  </div>
+
+                  <div class="col-6 col-md-2 border-end">
                     <div class="small text-muted mb-1 fw-bold">จำนวน</div>
                     <div class="fw-bold">{{ item.num_people }} ท่าน</div>
                   </div>
@@ -48,7 +54,7 @@
                     <div class="small text-muted mb-1 fw-bold">รวมยอดเงิน</div>
                     <div class="fw-bold text-primary">{{ parseFloat(item.total_price).toLocaleString() }} ฿</div>
                   </div>
-                  <div class="col-6 col-md-3">
+                  <div class="col-6 col-md-2">
                     <div class="small text-muted mb-1 fw-bold">สถานะทริป</div>
                     <div class="fw-bold text-success">เตรียมเดินทาง</div>
                   </div>
@@ -106,7 +112,6 @@ const handleCancel = async (bookingId) => {
       const result = await response.json();
       
       if (result.success) {
-        // ✅ วิธีทำให้หายไปทันที: กรองออกในตัวแปร bookings ในเครื่องเราเลย
         bookings.value = bookings.value.filter(item => item.booking_id !== bookingId);
         alert("ยกเลิกรายการจองสำเร็จแล้วค่ะ");
       }
@@ -115,6 +120,7 @@ const handleCancel = async (bookingId) => {
 };
 
 const formatDate = (dateStr) => {
+  if (!dateStr) return "ไม่ระบุ";
   return new Date(dateStr).toLocaleDateString('th-TH', {
     year: 'numeric', month: 'short', day: 'numeric'
   });
